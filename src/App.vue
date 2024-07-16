@@ -2,7 +2,9 @@
   <t-popup trigger="click" :attach="getAttach">
     <template #triggerElement>
       <t-button ghost>
-        <template #icon><Setting1Icon /></template>
+        <template #icon>
+          <Setting1Icon/>
+        </template>
         设置
       </t-button>
     </template>
@@ -13,14 +15,17 @@
 </template>
 
 <script setup>
-import { reactive, onMounted, ref, watch, computed } from "vue";
+import {reactive, onMounted, ref, watch, computed} from "vue";
 import settings from "./page/settings.vue";
-import { Popup as TPopup, Button as TButton } from "tdesign-vue-next";
-import { Setting1Icon } from "tdesign-icons-vue-next";
-import { GM_cookie, unsafeWindow, monkeyWindow, GM_addElement } from "$";
-import { findRef, wait } from "./utils/utils.js";
-import { fontFamilys } from "./utils/fontFamilys.js";
-import { regTip as hasTip } from "./hooks/regTips.js";
+import {Popup as TPopup, Button as TButton} from "tdesign-vue-next";
+import {Setting1Icon} from "tdesign-icons-vue-next";
+import {GM_cookie, unsafeWindow, monkeyWindow, GM_addElement} from "$";
+import {findRef, wait} from "./utils/utils.js";
+import {fontFamilys} from "./utils/fontFamilys.js";
+import {codeThemeList} from "./utils/codeThemeList.js";
+import {regTip as hasTip} from "./hooks/regTips.js";
+import {useObserverDom} from "./hooks/domChangeHooks.js";
+
 const _ = unsafeWindow._;
 const storageKey = ref("codeSettings");
 
@@ -35,29 +40,21 @@ const setting = ref({
 });
 const setData = (settings) => {
   unsafeWindow.localStorage.setItem(
-    storageKey.value,
-    JSON.stringify(settings)
+      storageKey.value,
+      JSON.stringify(settings)
   );
 };
 
 watch(
-  () => setting.value,
-  (val) => {
-    
-    setData(val);
-    setAllSetting();
-  },
-  { deep: true }
+    () => setting.value,
+    (val) => {
+
+      setData(val);
+      setAllSetting();
+    },
+    {deep: true}
 );
-const codeVms = computed(() => _.flatten(codes.value));
-const codes = ref([]);
-watch(
-  () => codeVms,
-  async(val) => {
-    setAllSetting();
-  },
-  { deep: true }
-);
+
 
 const initData = async () => {
   let settings = unsafeWindow.localStorage.getItem(storageKey.value)
@@ -68,21 +65,19 @@ const initData = async () => {
     });
   }
 };
-const setAllSetting = _.debounce(() => {
-  console.log(codes.value,'123123')
-  console.log(codeVms.value,'123123')
-  _.flatten(codes.value).forEach(async (i) => {
-    await unsafeWindow.zzUtil.watchEffectOnce(() =>_.get(i, "myEditor.updateOptions", ""));
-    if (_.isEmpty(i)) return;
+const setAllSetting = _.debounce(async() => {
+  await regTheme()
+  for (const i of _.flatten(codes.value)) {
+    await unsafeWindow.zzUtil.watchEffectOnce(() => _.get(i, "myEditor.updateOptions", ""));
+    if (_.isEmpty(i)) continue;
     if (i.mode === "javascript" && !unsafeWindow.hasRegTip) {
       regTip();
       unsafeWindow.hasRegTip = true
     }
-    console.log(i)
     //i.myEditor.getModel().pushStackElement();
     updateSetting(i.myEditor, setting.value);
-  });
-}, 100);
+  }
+}, 200);
 
 const regTip = () => {
   let monaco = unsafeWindow.monaco;
@@ -95,10 +90,29 @@ const regTip = () => {
         insertText: "console.log()",
         detail: "打印日志",
       });
-      return { suggestions };
+      return {suggestions};
     },
   });
 };
+
+const regTheme = _.debounce(() => {
+  let hasRegTheme = []
+  if(Array.isArray(unsafeWindow.hasRegThemes)){
+    hasRegTheme = unsafeWindow.hasRegThemes
+  }else{
+    unsafeWindow.hasRegThemes = []
+  }
+  let needReg = codeThemeList.filter(i => !i.out && !hasRegTheme.includes(i.value))
+  let editor = unsafeWindow.monaco.editor;
+  Promise.all(needReg.map(async(i) => {
+    const response = await fetch(new URL(`/src/themes/${i.value}.json`, import.meta.url));
+    if(response.ok){
+      const json = await response.json()
+      editor.defineTheme(i.value, json)
+      unsafeWindow.hasRegThemes.push(i.value)
+    }
+  }))
+},200)
 
 // 更新设置
 const updateSetting = (editor, setting) => {
@@ -116,20 +130,23 @@ const updateSetting = (editor, setting) => {
 // 更新字体间隔
 const setFeature = (feature = '"liga" 0, "calt" 0;') => {
   let dom = document.querySelector(
-    ".code.mask_popup .monaco-mouse-cursor-text"
+      ".code.mask_popup .monaco-mouse-cursor-text"
   );
-  console.log(feature)
+  if(!dom) return
   dom.style["font-feature-settings"] = feature;
 };
+
+const codes = ref([])
+
+useObserverDom(findRef(unsafeWindow.vueThis, "code").$children[1].$children[1].$el, () => setAllSetting())
+useObserverDom(findRef(unsafeWindow.vueThis, "code").$children[1].$children[2].$el, () => setAllSetting())
 
 onMounted(() => {
   initData();
   let root = unsafeWindow.vueThis;
   let ref = findRef(root, "code");
-  codes.value = [
-    ref.$children[1].$children[1].$children,
-    ref.$children[1].$children[2].$children,
-  ];
+  codes.value.push(ref.$children[1].$children[1].$children)
+  codes.value.push(ref.$children[1].$children[2].$children)
 });
 </script>
 <style scoped lang="less"></style>

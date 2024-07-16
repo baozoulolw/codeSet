@@ -28,15 +28,19 @@
       <t-select
         :popupProps="{ attach: getAttach }"
         style="width: 150px"
+        :filterable="true"
         :teleported="false"
         v-model="setting.theme"
       >
-        <t-option
-          v-for="item in themes"
-          :key="item.value"
-          :label="item.label"
-          :value="item.value"
-        ></t-option>
+        <t-option-group
+          v-for="(list,index) in themes"
+          :key="index"
+          :label="list.group"
+          :divider="true"
+        >
+          <t-option v-for="item in list.children" :key="item.value" :value="item.value" :label="item.name">
+          </t-option>
+        </t-option-group>
       </t-select>
     </t-space>
   </t-space>
@@ -45,12 +49,12 @@
 <script setup>
 import { reactive, onMounted, ref, watch, computed } from "vue";
 import { GM_cookie, unsafeWindow, monkeyWindow, GM_addElement } from "$";
-import { findRef, wait } from "../utils/utils";
 import { fontFamilys } from "../utils/fontFamilys.js";
-import { themes } from "../utils/themes.js";
+import {codeThemeList} from "../utils/codeThemeList.js";
 import {
   Select as TSelect,
   Option as TOption,
+  OptionGroup as TOptionGroup,
   InputNumber as TInputNumber,
   Space as TSpace,
 } from "tdesign-vue-next";
@@ -69,8 +73,10 @@ const getAttach = () => {
 
 
 const setting = ref({
-  
+
 })
+
+const themes = ref([])
 
 watch(() => setting.value,(val) => {
   emits("update:setting", val)
@@ -78,6 +84,13 @@ watch(() => setting.value,(val) => {
 
 onMounted(() => {
   setting.value = props.setting
+  let obj = _.groupBy(codeThemeList,'group')
+  Object.keys(obj).forEach(key => {
+    themes.value.push({
+      group: key === 'undefined' ? '其他':key,
+      children: obj[key]
+    })
+  })
 });
 </script>
 <style scoped lang="less">
