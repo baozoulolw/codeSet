@@ -3,10 +3,12 @@ import { waitForElementById, waitForElementByClass, wait, waitForElementBySelect
 import { GM_cookie, unsafeWindow, monkeyWindow, GM_addElement } from "$";
 import { fontFamilys } from "./utils/fontFamilys.js";
 import { codeThemeList } from './utils/codeThemeList';
+import {initMonacoEditor,wire} from "./utils/moncaoEditor.js";
 import './style.css';
 import App from './App.vue';
 // 引入组件库的少量全局样式变量
 import 'tdesign-vue-next/es/style/index.css';
+const _ = unsafeWindow._;
 
 const render = (el) => {
   createApp(App).mount(
@@ -18,9 +20,10 @@ const render = (el) => {
     })(),
   );
 }
-let renderHeader = (dom) => {
+let renderHeader = async(dom) => {
   dom.className = dom.className + ' head-right'
   render(dom)
+  await initMonacoEditor()
 }
 
 let storageKey = 'codeSettings'
@@ -51,11 +54,13 @@ if (unsafeWindow.location.hash.startsWith('#/widgetPage')) {
 }
 
 const setAllSetting = async (editor, settings) => {
+  let monaco = unsafeWindow.monaco;
   let mode = editor.getModel().getLanguageId()
   if (mode === "javascript" && !unsafeWindow.hasRegTip) {
     regTip();
     unsafeWindow.hasRegTip = true
   }
+  await wire(mode, editor,monaco)
   //i.myEditor.getModel().pushStackElement();
   updateSetting(editor, settings);
 };
@@ -86,7 +91,7 @@ const regTheme = async () => {
   let needReg = codeThemeList.filter(i => !i.out && !hasRegTheme.includes(i.value))
   let editor = unsafeWindow.monaco.editor;
   await Promise.all(needReg.map(async (i) => {
-    const response = await fetch(new URL(`/src/themes/${i.value}.json`, import.meta.url));
+    const response = await fetch(new URL(`/src/data/themes/${i.value}.json`, import.meta.url));
     if (response.ok) {
       const json = await response.json()
       editor.defineTheme(i.value, json)
@@ -94,6 +99,8 @@ const regTheme = async () => {
     }
   }))
 }
+
+
 
 
 const updateSetting = (editor, setting) => {
