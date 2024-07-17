@@ -10,7 +10,6 @@
     <t-space>
       <div class="label">字体</div>
       <t-select
-        :popupProps="{ attach: getAttach }"
         style="width: 150px"
         :teleported="false"
         v-model="setting.fontFamily"
@@ -26,7 +25,6 @@
     <t-space>
       <div class="label">主题</div>
       <t-select
-        :popupProps="{ attach: getAttach }"
         style="width: 150px"
         :filterable="true"
         :teleported="false"

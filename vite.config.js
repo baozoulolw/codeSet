@@ -11,7 +11,7 @@ export default defineConfig({
       userscript: {
         icon: 'https://vitejs.dev/logo.svg',
         namespace: 'npm/vite-plugin-monkey',
-        match: ['http://172.31.32.67:8080/index/*'],
+        match: ['http://172.31.32.67:8080/index/*','http://172.31.36.247:8080/index/*'],
       },
       build: {
         externalGlobals: {
