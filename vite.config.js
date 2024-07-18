@@ -10,8 +10,11 @@ export default defineConfig({
       entry: 'src/main.js',
       userscript: {
         icon: 'https://vitejs.dev/logo.svg',
+        description:'更换编辑器样式',
         namespace: 'npm/vite-plugin-monkey',
-        match: ['http://172.31.32.67:8080/index/*','http://172.31.36.247:8080/index/*'],
+        version:  '0.1',
+        license: 'MIT',
+        match: ['*://*/*'],
       },
       build: {
         externalGlobals: {
@@ -20,4 +23,11 @@ export default defineConfig({
       },
     }),
   ],
+  server:{
+    port:"7865",
+    host:'0.0.0.0'
+  },
+  define: {
+    'process.env.NODE_ENV': '"testing"'
+  },
 });

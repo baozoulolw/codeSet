@@ -8,33 +8,28 @@ import { Registry } from 'monaco-textmate'
 import { wireTmGrammars } from 'monaco-editor-textmate'
 import { GM_cookie, unsafeWindow, monkeyWindow, GM_addElement } from "$";
 
-let hasGetWorkUrl = false
+let hasGetWorkUrl = true
 
 export const initMonacoEditor = async () => {
   // 加载onigasm的WebAssembly文件
-  await loadWASM(`https://cdn.jsdelivr.net/gh/baozoulolw/codeSetResource@0.0.3/onigasm.wasm`)
-  let json = await (await fetch(new URL(`/src/data/monaco/json.worker.bundle.js`, import.meta.url))).text()
-  let css = await (await fetch(new URL(`/src/data/monaco/css.worker.bundle.js`, import.meta.url))).text()
-  let html = await (await fetch(new URL(`/src/data/monaco/html.worker.bundle.js`, import.meta.url))).text()
-  let typescript = await (await fetch(new URL(`/src/data/monaco/ts.worker.bundle.js`, import.meta.url))).text()
-  let editor = await (await fetch(new URL(`/src/data/monaco/editor.worker.bundle.js`, import.meta.url))).text()
+  await loadWASM(`https://baozoulolw.oss-cn-chengdu.aliyuncs.com/codeSet/data/onigasm/onigasm.wasm`)
   // 配置编辑器运行环境
   unsafeWindow.MonacoEnvironment = {
     getWorkerUrl: function(moduleId, label) {
       hasGetWorkUrl = true
       if (label === 'json') {
-        return  json
+        return  'https://baozoulolw.oss-cn-chengdu.aliyuncs.com/codeSet/data/monaco/json.worker.bundle.js'
       }
       if (label === 'css' || label === 'scss' || label === 'less') {
-        return css
+        return 'https://baozoulolw.oss-cn-chengdu.aliyuncs.com/codeSet/data/monaco/css.worker.bundle.js'
       }
       if (label === 'html' || label === 'handlebars' || label === 'razor') {
-        return html
+        return 'https://baozoulolw.oss-cn-chengdu.aliyuncs.com/codeSet/data/monaco/html.worker.bundle.js'
       }
       if (label === 'typescript' || label === 'javascript') {
-        return typescript
+        return 'https://baozoulolw.oss-cn-chengdu.aliyuncs.com/codeSet/data/monaco/ts.worker.bundle.js'
       }
-      return editor
+      return 'https://baozoulolw.oss-cn-chengdu.aliyuncs.com/codeSet/data/monaco/editor.worker.bundle.js'
     }
   }
 }
@@ -68,8 +63,7 @@ export const wire = async (languageId, editor,monaco) => {
         format = jsonMap.format
         path = jsonMap.path
       }
-      debugger
-      let text = await (await fetch(new URL(`/src/data/grammars/${path}`, import.meta.url))).text()
+      let text = await (await fetch(`https://baozoulolw.oss-cn-chengdu.aliyuncs.com/codeSet/data/grammars/${path}`)).text()
       return {
         format,
         content: text

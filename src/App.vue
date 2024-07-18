@@ -20,6 +20,7 @@ import settings from "./page/settings.vue";
 import {Popup as TPopup, Button as TButton} from "tdesign-vue-next";
 import {Setting1Icon} from "tdesign-icons-vue-next";
 import {unsafeWindow} from "$";
+import {initMonacoEditor,wire} from "./utils/moncaoEditor.js";
 
 const _ = unsafeWindow._;
 const storageKey = ref("codeSettings");
@@ -39,7 +40,6 @@ const setData = (settings) => {
 watch(
     () => setting.value,
     (val) => {
-
       setData(val);
     },
     {deep: true}
@@ -58,7 +58,7 @@ const initData = async () => {
 
 
 
-onMounted(() => {
+onMounted(async() => {
   initData();
 });
 </script>
